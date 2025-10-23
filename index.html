@@ -1,19 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
   <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Поделиться номером</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
   </head>
-  <body>
-    <h3>Добро пожаловать!</h3>
-    <button id="getPhone">Поделиться номером</button>
+  <body class="bg-gradient-to-b from-blue-50 to-blue-100 flex flex-col items-center justify-center h-screen text-gray-800 font-sans">
+    <div class="bg-white shadow-xl rounded-2xl p-8 max-w-sm w-full text-center">
+      <h3 class="text-2xl font-bold mb-4 text-blue-700">Добро пожаловать!</h3>
+      <p class="text-gray-600 mb-6">Нажмите кнопку ниже, чтобы поделиться своим номером телефона.</p>
+      <button
+        id="getPhone"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 shadow-md"
+      >
+        📱 Поделиться номером
+      </button>
+    </div>
 
     <script>
       const tg = window.Telegram.WebApp;
       tg.expand();
 
-      document.getElementById("getPhone").addEventListener("click", () => {
-        tg.requestContact(); // <- пользователь подтвердит передачу номера
+      document.getElementById("getPhone").addEventListener("click", async () => {
+        try {
+          const result = await tg.requestContact();
+          if (result && result.contact && result.contact.phone_number) {
+            alert(`Ваш номер телефона: ${result.contact.phone_number}`);
+          } else {
+            alert("Не удалось получить номер телефона 😕");
+          }
+        } catch (err) {
+          alert("Ошибка при получении номера телефона 😔");
+          console.error(err);
+        }
       });
     </script>
   </body>
