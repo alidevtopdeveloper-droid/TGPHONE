@@ -1,41 +1,154 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Поделиться номером</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  </head>
-  <body class="bg-gradient-to-b from-blue-50 to-blue-100 flex flex-col items-center justify-center h-screen text-gray-800 font-sans">
-    <div class="bg-white shadow-xl rounded-2xl p-8 max-w-sm w-full text-center">
-      <h3 class="text-2xl font-bold mb-4 text-blue-700">Добро пожаловать!</h3>
-      <p class="text-gray-600 mb-6">Нажмите кнопку ниже, чтобы поделиться своим номером телефона.</p>
-      <button
-        id="getPhone"
-        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all duration-200 shadow-md"
-      >
-        📱 Поделиться номером
-      </button>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Телеграм Web App — Инфо о пользователе</title>
+  <style>
+    :root{--glass: rgba(255,255,255,0.06);--accent:#6b21a8}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Arial;background:linear-gradient(135deg,#0f172a 0%,#071127 100%);color:#e6eef8}
+    .wrap{max-width:980px;margin:36px auto;padding:20px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+    header{display:flex;gap:16px;align-items:center}
+    .banner{flex:1;border-radius:12px;padding:20px;background:linear-gradient(90deg,var(--accent),#0ea5a5);color:#fff}
+    .banner h1{margin:0;font-size:20px;letter-spacing:0.6px}
+    .banner p{opacity:0.92;margin-top:8px}
+    .card{display:flex;gap:18px;align-items:center;padding:18px;margin-top:18px;border-radius:12px;background:var(--glass);backdrop-filter: blur(6px)}
+    .avatar{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#111827,#0b1220);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .meta{flex:1}
+    .meta h2{margin:0;font-size:18px}
+    .meta p{margin:2px 0 0 0;opacity:0.85}
+    .actions{display:flex;gap:8px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.08);padding:8px 12px;border-radius:8px;color:inherit;cursor:pointer}
+    input[type="tel"]{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    .hint{margin-top:10px;color:rgba(255,255,255,0.6);font-size:13px}
+    footer{margin-top:18px;color:rgba(255,255,255,0.55);font-size:13px}
+    .danger{color:#ffb4a2}
+    .ok{color:#a7f3d0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="banner">
+        <h1>Инфо о пользователе — Telegram Web App</h1>
+        <p>Показывает только ту информацию, которую Telegram передаёт приложению (имя, фамилия, username, id). Никакого магического поиска по чужим номерам — это приватность, бро.</p>
+      </div>
+      <div style="width:120px;text-align:right">
+        <small style="opacity:0.7">v1.0</small>
+      </div>
+    </header>
+
+    <div class="card" id="userCard">
+      <div class="avatar" id="avatar">?</div>
+      <div class="meta">
+        <h2 id="fullname">Неизвестный пользователь</h2>
+        <p id="username">@—</p>
+        <p id="userid">ID: —</p>
+        <p id="lang" style="margin-top:6px;opacity:0.8"></p>
+      </div>
+      <div class="actions">
+        <button id="copyBtn">Скопировать данные</button>
+        <button id="openBtn">Открыть в Telegram</button>
+      </div>
     </div>
 
-    <script>
-      const tg = window.Telegram.WebApp;
-      tg.expand();
+    <section style="margin-top:12px;display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:start">
+      <div>
+        <h3>Поделиться номером (опционально)</h3>
+        <p class="hint">Telegram Web Apps не дают номер автоматически. Пользователь может ввести свой номер вручную и сгенерировать ссылку для шаринга или нажать кнопку, чтобы скопировать.</p>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <input id="phone" type="tel" placeholder="+998 90 123 45 67" />
+          <button id="makeLink">Сгенерировать ссылку</button>
+        </div>
+        <p class="hint">Сгенерированная ссылка — это просто <code>tel:</code> или веб-ссылка, её можно вставить куда угодно. Не пытайтесь искать людей по номеру — это неправильно и часто нелегально.</p>
+        <div style="margin-top:12px">
+          <label class="danger">Важно:</label>
+          <p class="hint">Ни эта страница, ни Telegram не позволяют получить личные данные другого человека по номеру. Если вам нужно контакт от другого пользователя — попросите его отправить контакт через бота (request_contact) или вручную.</p>
+        </div>
+      </div>
 
-      document.getElementById("getPhone").addEventListener("click", async () => {
-        try {
-          const result = await tg.requestContact();
-          if (result && result.contact && result.contact.phone_number) {
-            alert(`Ваш номер телефона: ${result.contact.phone_number}`);
-          } else {
-            alert("Не удалось получить номер телефона 😕");
-          }
-        } catch (err) {
-          alert("Ошибка при получении номера телефона 😔");
-          console.error(err);
+      <div style="padding:12px;border-radius:10px;background:rgba(255,255,255,0.02)">
+        <h4>Быстрая кнопка: Отправить свой контакт боту</h4>
+        <p class="hint">Если у вас есть бот — используйте request_contact в клавиатуре, чтобы пользователь отправил свой номер напрямую боту.</p>
+        <pre style="white-space:pre-wrap;font-size:13px;">
+// Пример (python aiogram):
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+kb = ReplyKeyboardMarkup(resize_keyboard=True)
+kb.add(KeyboardButton("Отправить контакт", request_contact=True))
+        </pre>
+        <p class="hint">После того как пользователь нажмёт — бот получит контакт и сможет использовать номер согласно правилам Telegram и законам о приватности.</p>
+      </div>
+    </section>
+
+    <footer>
+      <div>Сделано с уважением к приватности. Не пытайтесь doxx'ить людей — это плохо и опасно.</div>
+    </footer>
+  </div>
+
+  <script>
+    const inTelegram = typeof window.Telegram !== 'undefined' || typeof window.TelegramWebviewProxy !== 'undefined' || (window.parent && window.parent.Telegram && window.parent.Telegram.WebApp);
+
+    function safeGetUser(){
+      try{
+        const webApp = window.Telegram?.WebApp || (window.parent && window.parent.Telegram?.WebApp);
+        if(!webApp && window.TelegramProxy){ // older wrappers
+          return window.TelegramProxy.initDataUnsafe?.user || null;
         }
-      });
-    </script>
-  </body>
+        return webApp?.initDataUnsafe?.user || null;
+      }catch(e){return null}
+    }
+
+    function setUser(u){
+      const fullnameEl = document.getElementById('fullname');
+      const usernameEl = document.getElementById('username');
+      const useridEl = document.getElementById('userid');
+      const avatarEl = document.getElementById('avatar');
+      const langEl = document.getElementById('lang');
+      if(!u){fullnameEl.textContent='Гость (не в Telegram)';usernameEl.textContent='—';useridEl.textContent='ID: —';langEl.textContent='';avatarEl.textContent='?';return}
+      const fn = [u.first_name||'', u.last_name||''].filter(Boolean).join(' ');
+      fullnameEl.textContent = fn || 'Без имени';
+      usernameEl.textContent = u.username ? ('@' + u.username) : '@—';
+      useridEl.textContent = 'ID: ' + (u.id||'—');
+      langEl.textContent = u.language_code ? ('Язык: ' + u.language_code) : '';
+      const initials = (u.first_name?u.first_name[0]:'') + (u.last_name?u.last_name[0]:'');
+      avatarEl.textContent = initials || (u.username?u.username[0].toUpperCase():'U');
+    }
+
+    document.getElementById('makeLink').addEventListener('click', ()=>{
+      const p = document.getElementById('phone').value.trim();
+      if(!p){alert('Введи номер, иначе не о чем генерировать.');return}
+      // basic normalization
+      const clean = p.replace(/[^+0-9]/g,'');
+      const tel = 'tel:' + clean;
+      navigator.clipboard.writeText(tel).then(()=>{
+        alert('Ссылка скопирована в буфер: ' + tel + '\nВставь куда нужно.');
+      }).catch(()=>{window.prompt('Скопируй ссылку вручную:', tel)})
+    })
+
+    document.getElementById('copyBtn').addEventListener('click', ()=>{
+      const lines = [
+        document.getElementById('fullname').textContent,
+        document.getElementById('username').textContent,
+        document.getElementById('userid').textContent
+      ].join('\n');
+      navigator.clipboard.writeText(lines).then(()=>alert('Данные скопированы в буфер.'))
+    })
+
+    document.getElementById('openBtn').addEventListener('click', ()=>{
+      const username = (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) || null;
+      if(username){
+        window.open('https://t.me/' + username.replace(/^@/,'') , '_blank');
+      }else{
+        alert('Username отсутствует. Открыть профиль нельзя.');
+      }
+    })
+
+    // init
+    const u = safeGetUser();
+    setUser(u);
+
+    // nice: if running inside Telegram's WebApp, call ready
+    try{if(window.Telegram && Telegram.WebApp){Telegram.WebApp.ready();Telegram.WebApp.expand();}}catch(e){}
+  </script>
+</body>
 </html>
