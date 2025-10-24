@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Telegram Phone Share</title>
+  <title>Личный кабинет</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     body {
@@ -16,78 +16,38 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      transition: all 0.3s ease;
+      align-items: center;
     }
-    h1 { margin-bottom: 20px; font-size: 2em; }
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 15px 25px;
-      font-size: 1.1em;
-      margin: 10px;
-      cursor: pointer;
+    h1 { margin-bottom: 10px; }
+    p { margin: 5px 0; font-size: 1.1em; }
+    .box {
       background: #ffffff22;
-      color: white;
-      transition: background 0.3s;
+      border-radius: 15px;
+      padding: 20px 30px;
+      backdrop-filter: blur(5px);
     }
-    button:hover { background: #ffffff44; }
-    #cabinet { display: none; flex-direction: column; align-items: center; justify-content: center; }
   </style>
 </head>
 <body>
-  <div id="welcome">
-    <h1>👋 Добро пожаловать!</h1>
-    <p>Нажми кнопку ниже, чтобы поделиться номером телефона.</p>
-    <button id="sharePhone">📱 Поделиться номером</button>
-  </div>
-
-  <div id="cabinet">
+  <div class="box">
     <h1>💼 Личный кабинет</h1>
-    <p id="userName"></p>
-    <p id="userPhone"></p>
-    <button id="backBtn">⬅️ Вернуться</button>
+    <p id="name"></p>
+    <p id="username"></p>
+    <p id="phone"></p>
   </div>
 
   <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    const welcome = document.getElementById("welcome");
-    const cabinet = document.getElementById("cabinet");
-    const userName = document.getElementById("userName");
-    const userPhone = document.getElementById("userPhone");
-    const backBtn = document.getElementById("backBtn");
-    const sharePhoneBtn = document.getElementById("sharePhone");
-
     const params = new URLSearchParams(window.location.search);
-    const fromName = params.get("from_name") || "Пользователь";
-    const username = params.get("username") ? "@" + params.get("username") : "";
-    const userId = params.get("from_id");
+    const first_name = params.get("first_name") || "Неизвестный";
+    const username = params.get("username") ? "@" + params.get("username") : "—";
+    const phone = params.get("phone") || "—";
 
-    // Запрашиваем номер у Telegram
-    sharePhoneBtn.addEventListener("click", () => {
-      tg.requestContact();
-    });
-
-    // Telegram отдаёт событие, когда номер успешно получен
-    tg.onEvent("contact_shared", (data) => {
-      const phone = data.phone_number || "Не удалось получить номер";
-      showCabinet(fromName, phone);
-    });
-
-    // Переключение на личный кабинет
-    function showCabinet(name, phone) {
-      welcome.style.display = "none";
-      cabinet.style.display = "flex";
-      userName.textContent = `Имя: ${name} ${username}`;
-      userPhone.textContent = `Телефон: ${phone}`;
-    }
-
-    // Кнопка "Назад"
-    backBtn.addEventListener("click", () => {
-      cabinet.style.display = "none";
-      welcome.style.display = "flex";
-    });
+    document.getElementById("name").textContent = "Имя: " + first_name;
+    document.getElementById("username").textContent = "Username: " + username;
+    document.getElementById("phone").textContent = "Телефон: " + phone;
   </script>
 </body>
 </html>
