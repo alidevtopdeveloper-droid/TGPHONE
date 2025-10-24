@@ -66,17 +66,31 @@
     }
     const tg = window.Telegram.WebApp;
     tg.expand();
+    phoneDiv.textContent = `Ваш номер: --`;
+    
+    const phoneDiv = document.getElementById("phone");
+    
+    // Проверяем, есть ли номер в URL
+    const params = new URLSearchParams(window.location.search);
+    const phone = params.get("phone");
+    
+    // Если номер пришёл из параметров — сохраняем его в localStorage
+    if (phone) {
+      localStorage.setItem("phone", phone);
+      phoneDiv.textContent = `Ваш номер: ${phone}`;
+    } else {
+      // Если параметра нет, пробуем достать из localStorage
+      const phonelocal = localStorage.getItem("phone");
+      if (phonelocal) {
+        phoneDiv.textContent = `Ваш номер: ${phonelocal}`;
+      } else {
+        // Если вообще ничего нет — показываем сообщение по умолчанию
+        phoneDiv.textContent = `Ваш номер: --`;
+      }
+    }
 
-    tg.requestContact(); // открывает окно Telegram для разрешения
-
-
-    // Когда бот отправит WebAppData обратно — можно его поймать
-    tg.onEvent("contact_shared", (data) => {
-      // Обычно Telegram отправляет контакт в backend, а не сюда.
-      // Но если ты используешь WebAppData, можно вернуть номер обратно.
-      phoneDiv.textContent = `Ваш номер: ${data.phone_number}`;
-    });
     const user = tg.initDataUnsafe?.user;
+     
 
     if (user) {
       document.getElementById("name").textContent =
