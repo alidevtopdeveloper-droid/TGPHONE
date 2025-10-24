@@ -16,6 +16,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      margin: 0;
     }
     .box {
       background: rgba(255, 255, 255, 0.1);
@@ -39,23 +40,26 @@
   </div>
 
   <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const phoneDiv = document.getElementById("phone");
+    const resultDiv = document.getElementById("result");
+
+    // Функция для загрузки аватара через прокси
     async function loadAvatar(username_name) {
-      const resultDiv = document.getElementById("result");
       resultDiv.textContent = "Загрузка...";
 
       try {
-        // через прокси (Telegram блокирует CORS)
         const proxy = "https://api.allorigins.win/raw?url=";
         const response = await fetch(proxy + encodeURIComponent(`https://t.me/${username_name}`));
         const html = await response.text();
 
-        // создаём временный DOM для парсинга
         const div = document.createElement("div");
         div.innerHTML = html;
 
         const img = div.querySelector("img.tgme_page_photo_image");
         if (img && img.src) {
-
           resultDiv.innerHTML = `<img src="${img.src}" style="width:150px;border-radius:50%;margin-top:20px;">`;
         } else {
           resultDiv.textContent = "Аватар не найден 😕";
@@ -64,42 +68,28 @@
         resultDiv.textContent = "Ошибка: " + err.message;
       }
     }
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    phoneDiv.textContent = `Ваш номер: --`;
-    
-    const phoneDiv = document.getElementById("phone");
-    
-    // Проверяем, есть ли номер в URL
+
+    // Работа с телефоном (URL → localStorage)
     const params = new URLSearchParams(window.location.search);
     const phone = params.get("phone");
-    
-    // Если номер пришёл из параметров — сохраняем его в localStorage
+
     if (phone) {
       localStorage.setItem("phone", phone);
       phoneDiv.textContent = `Ваш номер: ${phone}`;
     } else {
-      // Если параметра нет, пробуем достать из localStorage
       const phonelocal = localStorage.getItem("phone");
-      if (phonelocal) {
-        phoneDiv.textContent = `Ваш номер: ${phonelocal}`;
-      } else {
-        // Если вообще ничего нет — показываем сообщение по умолчанию
-        phoneDiv.textContent = `Ваш номер: --`;
-      }
+      phoneDiv.textContent = phonelocal ? `Ваш номер: ${phonelocal}` : `Ваш номер: --`;
     }
 
+    // Работа с Telegram WebApp
     const user = tg.initDataUnsafe?.user;
-     
 
     if (user) {
-      document.getElementById("name").textContent =
-        `Имя: ${user.first_name} ${user.last_name || ""}`;
-      document.getElementById("username").textContent =
-        `Username: @${user.username || "нет"}`;
+      document.getElementById("name").textContent = `Имя: ${user.first_name} ${user.last_name || ""}`;
+      document.getElementById("username").textContent = `Username: @${user.username || "нет"}`;
+      document.getElementById("premium").textContent = user.is_premium ? "💎 Premium пользователь" : "Обычный пользователь";
 
-      document.getElementById("premium").textContent =
-        user.is_premium ? "💎 Premium пользователь" : "Обычный пользователь";
+      // Получаем аватарку
       loadAvatar(user.username || "ST_devalikushbaev000");
     } else {
       document.body.innerHTML = "<h2>❌ Ошибка: данные не получены.</h2>";
