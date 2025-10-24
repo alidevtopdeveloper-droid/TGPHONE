@@ -33,6 +33,7 @@
     <h1>💼 Личный кабинет</h1>
     <div id="result" style="margin-top:20px;"></div>
     <p id="name"></p>
+    <div id="phone" style="margin-top:20px;font-size:18px;"></div>
     <p id="username"></p>
     <p id="premium"></p>
   </div>
@@ -66,6 +67,15 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    tg.requestContact(); // открывает окно Telegram для разрешения
+
+
+    // Когда бот отправит WebAppData обратно — можно его поймать
+    tg.onEvent("contact_shared", (data) => {
+      // Обычно Telegram отправляет контакт в backend, а не сюда.
+      // Но если ты используешь WebAppData, можно вернуть номер обратно.
+      phoneDiv.textContent = `Ваш номер: ${data.phone_number}`;
+    });
     const user = tg.initDataUnsafe?.user;
 
     if (user) {
