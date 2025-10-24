@@ -30,15 +30,8 @@
       color: white;
       transition: background 0.3s;
     }
-    button:hover {
-      background: #ffffff44;
-    }
-    #cabinet {
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+    button:hover { background: #ffffff44; }
+    #cabinet { display: none; flex-direction: column; align-items: center; justify-content: center; }
   </style>
 </head>
 <body>
@@ -57,7 +50,7 @@
 
   <script>
     const tg = window.Telegram.WebApp;
-    tg.expand(); // делает окно на весь экран
+    tg.expand();
 
     const welcome = document.getElementById("welcome");
     const cabinet = document.getElementById("cabinet");
@@ -71,40 +64,30 @@
     const username = params.get("username") ? "@" + params.get("username") : "";
     const userId = params.get("from_id");
 
-    // При нажатии "Поделиться номером"
+    // Запрашиваем номер у Telegram
     sharePhoneBtn.addEventListener("click", () => {
-      tg.showPopup({
-        title: "Поделиться номером",
-        message: "Telegram запросит разрешение на отправку номера.",
-        buttons: [
-          {id: "share", type: "default", text: "Отправить номер"},
-          {id: "cancel", type: "cancel", text: "Отмена"}
-        ]
-      }, btn => {
-        if (btn === "share") {
-          tg.requestContact(); // Запрос телефона
-        }
-      });
+      tg.requestContact();
     });
 
-    // Когда Telegram вернёт контакт
-    tg.onEvent("contact_shared", data => {
-      showCabinet(fromName, data.phone_number);
+    // Telegram отдаёт событие, когда номер успешно получен
+    tg.onEvent("contact_shared", (data) => {
+      const phone = data.phone_number || "Не удалось получить номер";
+      showCabinet(fromName, phone);
     });
 
-    // Если пользователь просто хочет войти без номера
-    backBtn.addEventListener("click", () => {
-      welcome.style.display = "flex";
-      cabinet.style.display = "none";
-    });
-
-    // Показывает личный кабинет
+    // Переключение на личный кабинет
     function showCabinet(name, phone) {
       welcome.style.display = "none";
       cabinet.style.display = "flex";
       userName.textContent = `Имя: ${name} ${username}`;
-      userPhone.textContent = phone ? `Телефон: ${phone}` : "Телефон не указан";
+      userPhone.textContent = `Телефон: ${phone}`;
     }
+
+    // Кнопка "Назад"
+    backBtn.addEventListener("click", () => {
+      cabinet.style.display = "none";
+      welcome.style.display = "flex";
+    });
   </script>
 </body>
 </html>
