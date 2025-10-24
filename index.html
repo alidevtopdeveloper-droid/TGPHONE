@@ -41,7 +41,7 @@
     tg.expand();
 
     const user = tg.initDataUnsafe?.user;
-    alert(user);
+    alert(tg.initDataUnsafe?.user);
     if (user) {
       document.getElementById("name").textContent =
         `Имя: ${user.first_name} ${user.last_name || ""}`;
