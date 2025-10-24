@@ -1,72 +1,110 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Telegram WebApp — Вход</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telegram Phone Share</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
-    body {font-family: sans-serif; background: #0d1117; color: #e6edf3; padding: 20px;}
-    .box {background: #161b22; padding: 20px; border-radius: 10px; max-width: 400px; margin: 0 auto;}
-    input, button {width: 100%; padding: 10px; margin-top: 10px; border-radius: 6px; border: none;}
-    input {background: #21262d; color: white;}
-    button {background: #238636; color: white; cursor: pointer;}
-    .info {font-size: 14px; opacity: .8; margin-top: 5px;}
+    body {
+      font-family: system-ui, sans-serif;
+      text-align: center;
+      padding: 30px;
+      background: linear-gradient(135deg, #23a6d5, #23d5ab);
+      color: white;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    h1 { margin-bottom: 20px; font-size: 2em; }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 15px 25px;
+      font-size: 1.1em;
+      margin: 10px;
+      cursor: pointer;
+      background: #ffffff22;
+      color: white;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #ffffff44;
+    }
+    #cabinet {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h2>👤 Информация о пользователе</h2>
-    <p><b>Имя:</b> <span id="name">Загрузка...</span></p>
-    <p><b>Username:</b> <span id="username">—</span></p>
-    <p><b>ID:</b> <span id="userid">—</span></p>
-    <hr>
-    <h3>📱 Поделиться номером</h3>
-    <input id="phone" type="tel" placeholder="+998 90 123 45 67">
-    <button id="submit">Продолжить</button>
-    <p class="info">Номер не передаётся автоматически. Введите вручную, если хотите поделиться с ботом.</p>
+  <div id="welcome">
+    <h1>👋 Добро пожаловать!</h1>
+    <p>Нажми кнопку ниже, чтобы поделиться номером телефона.</p>
+    <button id="sharePhone">📱 Поделиться номером</button>
+  </div>
+
+  <div id="cabinet">
+    <h1>💼 Личный кабинет</h1>
+    <p id="userName"></p>
+    <p id="userPhone"></p>
+    <button id="backBtn">⬅️ Вернуться</button>
   </div>
 
   <script>
+    const tg = window.Telegram.WebApp;
+    tg.expand(); // делает окно на весь экран
+
+    const welcome = document.getElementById("welcome");
+    const cabinet = document.getElementById("cabinet");
+    const userName = document.getElementById("userName");
+    const userPhone = document.getElementById("userPhone");
+    const backBtn = document.getElementById("backBtn");
+    const sharePhoneBtn = document.getElementById("sharePhone");
+
     const params = new URLSearchParams(window.location.search);
-    const webApp = window.Telegram?.WebApp;
+    const fromName = params.get("from_name") || "Пользователь";
+    const username = params.get("username") ? "@" + params.get("username") : "";
+    const userId = params.get("from_id");
 
-    let user = null;
-
-    // Telegram user info
-    if (webApp && webApp.initDataUnsafe && webApp.initDataUnsafe.user) {
-      user = webApp.initDataUnsafe.user;
-    } else {
-      user = {
-        id: params.get("from_id") || "неизвестен",
-        first_name: params.get("from_name") || "Гость",
-        username: params.get("username") || "неизвестен",
-      };
-    }
-
-    document.getElementById("name").textContent = user.first_name || "Без имени";
-    document.getElementById("username").textContent = user.username ? `@${user.username}` : "—";
-    document.getElementById("userid").textContent = user.id;
-
-    // Кнопка отправки номера
-    document.getElementById("submit").addEventListener("click", async () => {
-      const phone = document.getElementById("phone").value.trim();
-      if (!phone) {
-        alert("Введите номер телефона.");
-        return;
-      }
-
-      // Можно сохранить или отправить через API/бота
-      alert(`Спасибо, ${user.first_name}! Номер ${phone} сохранён.`);
-      
-      try { webApp.close(); } catch (e) {}
+    // При нажатии "Поделиться номером"
+    sharePhoneBtn.addEventListener("click", () => {
+      tg.showPopup({
+        title: "Поделиться номером",
+        message: "Telegram запросит разрешение на отправку номера.",
+        buttons: [
+          {id: "share", type: "default", text: "Отправить номер"},
+          {id: "cancel", type: "cancel", text: "Отмена"}
+        ]
+      }, btn => {
+        if (btn === "share") {
+          tg.requestContact(); // Запрос телефона
+        }
+      });
     });
 
-    try {
-      if (webApp) {
-        webApp.ready();
-        webApp.expand();
-      }
-    } catch (e) {}
+    // Когда Telegram вернёт контакт
+    tg.onEvent("contact_shared", data => {
+      showCabinet(fromName, data.phone_number);
+    });
+
+    // Если пользователь просто хочет войти без номера
+    backBtn.addEventListener("click", () => {
+      welcome.style.display = "flex";
+      cabinet.style.display = "none";
+    });
+
+    // Показывает личный кабинет
+    function showCabinet(name, phone) {
+      welcome.style.display = "none";
+      cabinet.style.display = "flex";
+      userName.textContent = `Имя: ${name} ${username}`;
+      userPhone.textContent = phone ? `Телефон: ${phone}` : "Телефон не указан";
+    }
   </script>
 </body>
 </html>
